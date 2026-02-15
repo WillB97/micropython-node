@@ -1,9 +1,8 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # TODO switch this to a python script
 
 cd $(dirname $0)/..
 
-# Copy files into place
 # Install the OTA boot code
 mpremote cp -v bootloader/* :
 
@@ -13,3 +12,5 @@ mpremote exec 'import os;os.rename("/lib/future","/active")'
 
 # TODO config wifi/mqtt creds
 # mpremote cp ... :creds.json
+
+mpremote exec 'import machine;print(f"Unique identifier: {machine.unique_id().hex()}")'
