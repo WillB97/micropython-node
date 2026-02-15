@@ -1,9 +1,9 @@
 {
   "urls": [
-    ["src/__init__.py", "__init__.py"],
-    ["src/main.py", "main.py"],
-    ["src/mqtt.py", "mqtt.py"],
-    ["src/utils.py", "utils.py"]
+    ["future/__init__.py", "src/__init__.py"],
+    ["future/main.py", "src/main.py"],
+    ["future/mqtt.py", "src/mqtt.py"],
+    ["future/utils.py", "src/utils.py"]
   ],
   "deps": [
     ["umqtt.simple", "1.7.0"]
