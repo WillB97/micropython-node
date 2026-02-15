@@ -1,0 +1,2 @@
+esptool <6,>=5
+mpremote==1.27.0
