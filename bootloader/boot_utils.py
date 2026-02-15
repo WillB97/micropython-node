@@ -38,11 +38,23 @@ def get_led():
     return _LED
 
 def exists(file):
+    import os
     try:
-        with open(file):
-            return True
+        os.stat(file)
+        return True
     except OSError:
         return False
+
+def rmtree(root):
+    import os
+    # is dir
+    if not (exists(root) and (os.stat(root)[0] & 0x4000)):
+        return
+    for file, ftype, _, _ in os.ilistdir(root):
+        if ftype & 0x4000: # dir
+            rmtree(f"{root}/{file}")
+        os.remove(f"{root}/{file}")
+    os.rmdir(root)
 
 def get_creds(cred_file = "/creds.json", exclude_id=False):
     import json
@@ -74,6 +86,39 @@ def do_connect(config):
             pass
     print('network config:', sta_if.ipconfig('addr4'))
 
+def get_version():
+    try:
+        with open('version.txt') as f:
+            return f.read()
+    except OSError:
+        return ''
+
 def fetch_ota_update():
-    # TODO
-    pass
+    import machine
+    import mip
+    import os
+    import time
+    package = "github:willb97/micropython-node/package.json"
+    # Check if version has changed before doing install
+    response = mip.requests.get(mip._rewrite_url(package))
+    if response.status_code != 200:
+        print("Failed to get package.json")
+        success = False
+    else:
+        if response.json()['version'] == get_version():
+            print("Already up to date")
+            return
+        rmtree('/lib/future')
+        # Abuse _install_package so that we get a return code
+        success = mip._install_package(package, "https://micropython.org/pi/v2", target='/lib', version=None, mpy=True)
+    # on success, remove /active and mv /future to /active
+    if success:
+        rmtree('/active')
+        os.rename('/lib/future', '/active')
+        with open('version.txt', 'w') as f:
+            f.write(response.json()['version'])
+    else:
+        print('Update failed')
+        rmtree('/lib/future')
+        time.sleep(5)
+        machine.reset()
