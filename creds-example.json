@@ -1,0 +1,7 @@
+{
+    "ssid": "SSID",
+    "psk": "WPA-PSK",
+    "mqtt_server": "MQTT SERVER URL",
+    "mqtt_user": "MQTT USERNAME",
+    "mqtt_passwd": "MQTT PASSWORD"
+}
