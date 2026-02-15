@@ -9,7 +9,7 @@ mpremote mkdir :active
 mpremote cp -rv src/* :active
 
 # TODO install libraries
-# mpremote mip install
+# mpremote mip install --target active ./package.json
 
 # TODO config wifi/mqtt creds
 # mpremote cp ... creds.json
