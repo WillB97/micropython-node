@@ -93,30 +93,42 @@ def get_version():
     except OSError:
         return ''
 
+def check_package_hashes(url):
+    import mip
+    response = mip.requests.get(url)
+    if response.status_code != 200:
+        print("Failed to get hashes.json")
+        return get_version(), True
+    rsp_json = response.json()
+    version = rsp_json.get('commit_hash') or get_version()
+    for path, hash in rsp_json.get('hashes', {}).items():
+        if not mip._check_exists(path, hash):
+            print(f"Hash mismatch for: {path}")
+            return version, True
+    return version, False
+
 def fetch_ota_update():
     import machine
     import mip
     import os
     import time
+    package_hashes = "https://willb97.github.io/micropython-node/hashes.json"
     package = "github:willb97/micropython-node/package.json"
-    # Check if version has changed before doing install
-    response = mip.requests.get(mip._rewrite_url(package))
-    if response.status_code != 200:
-        print("Failed to get package.json")
-        success = False
-    else:
-        if response.json()['version'] == get_version():
-            print("Already up to date")
-            return
-        rmtree('/lib/future')
-        # Abuse _install_package so that we get a return code
-        success = mip._install_package(package, "https://micropython.org/pi/v2", target='/lib', version=None, mpy=True)
+
+    # Check if package files match published hashes
+    version, do_update = check_package_hashes(package_hashes)
+    if not do_update:
+        return
+
+    rmtree('/lib/future')
+    # Abuse _install_package so that we get a return code
+    success = mip._install_package(package, "https://micropython.org/pi/v2", target='/lib', version=None, mpy=True)
     # on success, remove /active and mv /future to /active
     if success:
         rmtree('/active')
         os.rename('/lib/future', '/active')
         with open('version.txt', 'w') as f:
-            f.write(response.json()['version'])
+            f.write(version)
     else:
         print('Update failed')
         rmtree('/lib/future')
