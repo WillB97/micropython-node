@@ -2,10 +2,11 @@
 import json
 
 from mqtt import do_mqtt
-from boot_utils import get_creds, get_led
+from boot_utils import get_creds, get_led, get_version
 CONFIG = get_creds()
 CLIENT = None
 LED = get_led()
+VERSION = get_version()
 
 def board_status():
     import esp32
@@ -13,7 +14,7 @@ def board_status():
     sta_if = network.WLAN(network.WLAN.IF_STA)
     return {
         'identifier': CLIENT.client_id, 'temp': esp32.mcu_temperature(),
-        'ssid': sta_if.config('ssid'), 'rssi': sta_if.status('rssi')
+        'ssid': sta_if.config('ssid'), 'rssi': sta_if.status('rssi'), 'version': VERSION
     }
 
 def sub_cb(topic, payload):

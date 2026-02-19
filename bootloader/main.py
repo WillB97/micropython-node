@@ -8,12 +8,6 @@ try:
 except Exception as e:
     print("Fatal error in main:")
     sys.print_exception(e)
-    try:
-        import os
-        # Delete version file to force redownload next boot
-        os.remove('/version.txt')
-    except OSError:
-        pass
 except KeyboardInterrupt:
     pass
 else:
