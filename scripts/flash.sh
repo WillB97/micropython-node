@@ -13,7 +13,9 @@ mkdir -p dist
 git rev-parse --short HEAD > dist/version.txt
 mpremote cp dist/version.txt :
 
-# TODO config wifi/mqtt creds
-# mpremote cp ... :creds.json
+# config wifi/mqtt creds
+if [ -f creds.json ]; then
+    mpremote cp creds.json :creds.json
+fi
 
 mpremote exec 'import machine;print(f"Unique identifier: {machine.unique_id().hex()}")'

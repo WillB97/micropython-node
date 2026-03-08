@@ -89,7 +89,7 @@ def do_connect(config):
 def get_version():
     try:
         with open('version.txt') as f:
-            return f.read()
+            return f.read().strip()
     except OSError:
         return ''
 

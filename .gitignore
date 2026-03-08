@@ -25,6 +25,8 @@ venv.bak/
 .idea
 core
 
+dist/
+
 _version.py
 .vscode
 
