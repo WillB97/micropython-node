@@ -19,3 +19,5 @@ if [ -f creds.json ]; then
 fi
 
 mpremote exec 'import machine;print(f"Unique identifier: {machine.unique_id().hex()}")'
+
+mpremote reset
