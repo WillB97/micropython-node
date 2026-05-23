@@ -74,7 +74,7 @@ def get_creds(cred_file = "/creds.json", exclude_id=False):
 def do_connect(config):
     if not (config.get('ssid') and config.get('psk')):
         print("Credentials not configured")
-        return
+        return False
 
     import network
     from time import ticks_ms
@@ -88,8 +88,9 @@ def do_connect(config):
             pass
         if not sta_if.isconnected():
             print('failed to connect')
-            return
+            return False
     print('network config:', sta_if.ipconfig('addr4'))
+    return True
 
 def get_version():
     try:
