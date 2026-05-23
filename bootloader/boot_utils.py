@@ -92,26 +92,34 @@ def do_connect(config):
     print('network config:', sta_if.ipconfig('addr4'))
     return True
 
-def get_version():
+def get_version(filename='version.txt'):
     try:
-        with open('version.txt') as f:
+        with open(filename) as f:
             return f.read().strip()
     except OSError:
         return ''
 
-def check_package_hashes(url):
+def verify_package_hashes(url, git_ver=True, root=""):
     import mip
     response = mip.requests.get(url)
     if response.status_code != 200:
         print("Failed to get hashes.json")
-        return get_version(), True
+        return None, None
     rsp_json = response.json()
-    version = rsp_json.get('commit_hash') or get_version()
+    ver_key = 'commit_hash' if git_ver else 'version'
+    version = rsp_json.get(ver_key)
     for path, hash in rsp_json.get('hashes', {}).items():
-        if not mip._check_exists(path, hash):
+        path_full =  '/'.join([root, path])
+        if not mip._check_exists(path_full, hash):
             print(f"Hash mismatch for: {path}")
             return version, True
     return version, False
+
+def check_package_hashes(url, filename='version.txt', git_ver=True):
+    raw_version, do_update = verify_package_hashes(url, git_ver)
+    version = raw_version or get_version(filename)
+    # Mask being unable to fetch hashes
+    return version, do_update is True
 
 def fetch_ota_update():
     import machine
@@ -140,3 +148,42 @@ def fetch_ota_update():
         rmtree('/lib/future')
         time.sleep(5)
         machine.reset()
+
+def fetch_boot_ota_update():
+    import os
+    import mip
+    package_hashes = "https://willb97.github.io/micropython-node/bootloader/hashes.json"
+    package = "github:willb97/micropython-node/bootloader/package.json"
+
+    # Check if package files match published hashes
+    version, do_update = check_package_hashes(package_hashes, "boot_version.txt", git_ver=False)
+    if not do_update:
+        return
+
+    print("Updating bootloader to version", version)
+
+    # Create & clear /new_boot
+    rmtree('/new_boot')
+    os.mkdir('/new_boot')
+
+    # Abuse _install_package so that we get a return code
+    success = mip._install_package(package, "https://micropython.org/pi/v2", target='/new_boot', version=None, mpy=True)
+
+    if success:
+        # Recheck hashes and ensure versions still match
+        version_check, _ = verify_package_hashes(package_hashes, git_ver=False, root='/new_boot')
+        if version_check == version:
+            # copy files (non-recursive) to /
+            for name, dtype, _, _ in os.ilistdir('/new_boot'):
+                if dtype == 0x4000:
+                    continue # skip dirs
+                path = '/'.join(['/new_boot', name])
+                os.rename(path, name)
+            with open('boot_version.txt', 'w') as f:
+                f.write(version)
+            print("Updated bootloader")
+        else:
+            print("Bootloader update failed")
+
+    # Unconditionally remove /new_boot
+    rmtree('/new_boot')
