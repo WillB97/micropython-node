@@ -77,13 +77,18 @@ def do_connect(config):
         return
 
     import network
+    from time import ticks_ms
     sta_if = network.WLAN(network.WLAN.IF_STA)
     if not sta_if.isconnected():
         print('connecting to network...')
         sta_if.active(True)
         sta_if.connect(config['ssid'], config['psk'])
-        while not sta_if.isconnected():
+        end_time = ticks_ms() + 20000 # 20 sec
+        while not sta_if.isconnected() and ticks_ms() < end_time:
             pass
+        if not sta_if.isconnected():
+            print('failed to connect')
+            return
     print('network config:', sta_if.ipconfig('addr4'))
 
 def get_version():
