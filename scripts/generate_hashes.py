@@ -32,7 +32,7 @@ def path_rewrite(full_path: str, strip_prefix: str, new_prefix: str) -> str:
 
 
 def generate_package_hashes(
-    package_file: Path, output_file: Path, strip_prefix: str, new_prefix: str
+    package_file: Path, output_file: Path | None, strip_prefix: str, new_prefix: str
 ):
     """Generate a JSON of the hashes of all files in a package."""
     res: dict[str, Any] = {"hashes": {}}
@@ -40,10 +40,12 @@ def generate_package_hashes(
     package_data = json.loads(package_file.read_text())
     for dest_file, url in package_data["urls"]:
         new_file = path_rewrite(dest_file, strip_prefix, new_prefix)
-        hashes[new_file] = calculate_hash(Path(url))
+        hashes[new_file] = calculate_hash(package_file.parent / Path(url))
 
     if commit := get_git_hash():
         res["commit_hash"] = commit
+
+    res["version"] = package_data["version"]
 
     if output_file:
         output_file.write_text(json.dumps(res, separators=(",", ":")))

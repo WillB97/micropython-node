@@ -33,8 +33,9 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Generate hashes
         run: |
-          mkdir dist/
+          mkdir dist/ dist/bootloader
           scripts/generate_hashes.py package.json --strip-prefix future --new-prefix active --output dist/hashes.json
+          scripts/generate_hashes.py bootloader/package.json --output dist/bootloader/hashes.json
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
