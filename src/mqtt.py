@@ -22,10 +22,12 @@ class MQTTClient(simple.MQTTClient):
         i = 0
         while 1:
             try:
+                self.log(True, "Reconnecting")
                 super().connect(False)
                 # Resubscribe after connection
                 for (topic, qos) in self.subscriptions:
                     super().subscribe(topic, qos)
+                break
             except OSError as e:
                 self.log(True, e)
                 i += 1
