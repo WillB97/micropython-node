@@ -148,5 +148,5 @@ def rx_msg(timeout_s=5):
         # try reading out FIFO
         payload = spi_read(bytearray([0x7F]), recv_len).hex()
 
-        print(payload, rssi, sep=':')
+        print(payload.hex(), rssi, sep=':')
         # print("Msg received (", recv_len, "b, RSSI", rssi, "):", payload)
