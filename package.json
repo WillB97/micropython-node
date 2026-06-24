@@ -3,6 +3,7 @@
     ["future/__init__.py", "src/__init__.py"],
     ["future/main.py", "src/main.py"],
     ["future/mqtt.py", "src/mqtt.py"],
+    ["future/rfm_trx.py", "src/rfm_trx.py"],
     ["future/utils.py", "src/utils.py"]
   ],
   "deps": [
