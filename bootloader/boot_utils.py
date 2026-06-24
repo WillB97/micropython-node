@@ -71,7 +71,7 @@ def get_creds(cred_file = "/creds.json", exclude_id=False):
     except ValueError:
         return creds
 
-def do_connect(config):
+def do_connect(config, timeout_ms=20000):
     if not (config.get('ssid') and config.get('psk')):
         print("Credentials not configured")
         return False
@@ -83,7 +83,7 @@ def do_connect(config):
         print('connecting to network...')
         sta_if.active(True)
         sta_if.connect(config['ssid'], config['psk'])
-        end_time = ticks_ms() + 20000 # 20 sec
+        end_time = ticks_ms() + timeout_ms
         while not sta_if.isconnected() and ticks_ms() < end_time:
             pass
         if not sta_if.isconnected():
