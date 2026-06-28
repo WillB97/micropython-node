@@ -111,6 +111,9 @@ def ensure_wifi():
     LEDS[3] = (20 if not sta_if.isconnected() else 0, 0, 20 if not WITH_TRX else 0)
     LEDS.write()
 
+def time_modulo(time_offset):
+    return (time_ns() + 2_500_000_000 - time_offset) % 5_000_000_000
+
 # Do not run MQTT operations if not connected, they will hang until reconnected
 # WiFi automatically reconnects, MQTT will reconnect on next action
 ensure_wifi()
@@ -119,6 +122,9 @@ LED_ENTRY = 0
 if IS_TX:
     # For transmitter
     rfm_trx.tx_init()
+
+    # Precalculate time offset from node id in ns
+    time_offset = int(NODE_ID * 0.1e9)
 
     while True:
         LEDS[0] = LED_CYCLE[LED_ENTRY]
@@ -129,38 +135,36 @@ if IS_TX:
         if sta_if.isconnected() and CLIENT is not None:
             CLIENT.publish(f'status/{CLIENT.client_id}',json.dumps(board_status()))
 
-        while (NODE_ID * 0.1e9) < (time_ns() + 1.5e9) % 5e9:
+        # split timeslot into 20x5ms slot. Align window so that modulo has 2.5s before window and 2.4s after
+        # pick 2 random 5ms slots in the timeslot and send message twice
+        slots= [randint(0, 19), randint(0, 19)]
+        slots.sort()
+        # ensure slots are different
+        if slots[0] == slots[1]:
+            slots[1] = (slots[1] + 1) % 20
+        # in ms
+        slots = [(slot * 5 + 2500) for slot in slots]
+        payload = bytes.fromhex(CONFIG['client_id'])
+
+        # Spin until modulo wraps and is under 2.5
+        while time_modulo(time_offset) > 2.5e9:
             if sta_if.isconnected() and CLIENT is not None:
                 CLIENT.check_msg()
 
         if WITH_TRX:
-            # split timeslot into 20x5ms slot
-            # pick 2 random 5ms slots in the timeslot and send message twice
-            slots= [randint(0, 19), randint(0, 19)]
-            slots.sort()
-            # in ms
-            slots = [(slot * 5 + NODE_ID * 100) for slot in slots]
-
-            # TODO fix to avoid negative sleeps
-
             # sleep for first slot
-            sleep_for = slots[0] - ((time_ns() % 5e9) / 1e6)
-            if sleep_for > 0:
-                sleep_ms(sleep_for)
+            sleep_for = slots[0] - (time_modulo(time_offset) / 1_000_000)
+            sleep_ms(sleep_for)
 
-            rfm_trx.tx_msg(bytes.fromhex(CONFIG['client_id']))
+            rfm_trx.tx_msg(payload)
 
             # sleep for second slot
-            sleep_for = slots[1] - ((time_ns() % 5e9) / 1e6)
+            sleep_for = slots[1] - (time_modulo(time_offset) / 1_000_000)
             if sleep_for > 0:
                 sleep_ms(sleep_for)
-            rfm_trx.tx_msg(bytes.fromhex(CONFIG['client_id']))
+            rfm_trx.tx_msg(payload)
         else:
-            sleep_ms(1500)
-
-        while (NODE_ID * 0.1e9) > time_ns() % 5e9:
-            if sta_if.isconnected() and CLIENT is not None:
-                CLIENT.check_msg()
+            sleep_ms(2500)
 
 else:
     RECV_COUNT = 0
