@@ -21,20 +21,20 @@ def spi_init(cs_pin):
     global SPI, CS
     SPI = machine.SPI(1, baudrate=5000000, polarity=0, phase=0)
     CS = machine.Pin(cs_pin, machine.Pin.OUT)
-    CS.high()
+    CS.on()
 
 def spi_write(payload):
     payload[0] = payload[0] | 0x80
-    CS.low()
+    CS.off()
     SPI.write(payload)
-    CS.high()
+    CS.on()
 
 def spi_read(payload, length):
-    CS.low()
+    CS.off()
     SPI.write(payload)
     result = bytearray(length)
     SPI.readinto(result)
-    CS.high()
+    CS.on()
     return result
 
 def detect_trx():
