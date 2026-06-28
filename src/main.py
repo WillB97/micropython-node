@@ -153,16 +153,17 @@ if IS_TX:
 
         if WITH_TRX:
             # sleep for first slot
-            sleep_for = slots[0] - (time_modulo(time_offset) / 1_000_000)
+            sleep_for = slots[0] - (time_modulo(time_offset) // 1_000_000)
             sleep_ms(sleep_for)
 
             rfm_trx.tx_msg(payload)
 
             # sleep for second slot
-            sleep_for = slots[1] - (time_modulo(time_offset) / 1_000_000)
+            sleep_for = slots[1] - (time_modulo(time_offset) // 1_000_000)
             if sleep_for > 0:
                 sleep_ms(sleep_for)
             rfm_trx.tx_msg(payload)
+            print("Transmitted")
         else:
             sleep_ms(2500)
 
