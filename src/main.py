@@ -15,7 +15,7 @@ LED = get_led()
 VERSION = get_version()
 BOOT_VER = get_version("boot_version.txt")
 CS_PIN = 7
-LED_CYCLE = [(50, 0, 0), (0, 50, 0), (0, 0, 50)]
+LED_CYCLE = [(20, 0, 0), (0, 20, 0), (0, 0, 20)]
 
 def board_status():
     import esp32
@@ -87,7 +87,7 @@ for x in range(8):
     sleep_ms(200)
 
 # LED 5 - green=TX, blue=RX
-LEDS[4] = (0, 50 if IS_TX else 0, 50 if not IS_TX else 0)
+LEDS[4] = (0, 20 if IS_TX else 0, 20 if not IS_TX else 0)
 LEDS.write()
 
 CLIENT = None
@@ -110,7 +110,7 @@ def ensure_wifi():
         CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
 
     # LED 4 - blue=no rfm, red=no WiFi
-    LEDS[3] = (50 if not not sta_if.isconnected() else 0, 0, 50 if not WITH_TRX else 0)
+    LEDS[3] = (20 if not sta_if.isconnected() else 0, 0, 20 if not WITH_TRX else 0)
     LEDS.write()
 
 # Do not run MQTT operations if not connected, they will hang until reconnected

@@ -13,14 +13,15 @@ Packet structure:
 """
 import time
 import machine
+from machine import Pin
 
 SPI: machine.SPI = None
-CS: machine.Pin = None
+CS: Pin = None
 
 def spi_init(cs_pin):
     global SPI, CS
-    SPI = machine.SPI(1, baudrate=5000000, polarity=0, phase=0)
-    CS = machine.Pin(cs_pin, machine.Pin.OUT)
+    SPI = machine.SPI(1, baudrate=5000000, polarity=0, phase=0, sck=Pin(4), mosi=Pin(6), miso=Pin(5))
+    CS = Pin(cs_pin, Pin.OUT)
     CS.on()
 
 def spi_write(payload):
@@ -38,8 +39,8 @@ def spi_read(payload, length):
     return result
 
 def detect_trx():
-    version = spi_read(bytearray([0x01]), 1).hex()
-    return version == bytes([0x06])
+    version = spi_read(bytearray([0x01]), 1)[0]
+    return version == 0x06
 
 def tx_init():
     # Software reset
