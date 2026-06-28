@@ -74,7 +74,7 @@ CFG1_STRAP = Pin(0, Pin.IN, Pin.PULL_DOWN)
 IS_TX = not CFG1_STRAP.value()
 
 # TODO get node ID
-NODE_ID = 0
+NODE_ID = 1
 
 LEDS = neopixel.NeoPixel(Pin(10), 5, timing=(300,900,600,600))
 LEDS.fill((0, 0, 0))
@@ -100,10 +100,8 @@ WITH_TRX = rfm_trx.detect_trx()
 
 def ensure_wifi():
     global WIFI_ESTABLISHED, CLIENT
-    if not sta_if.isconnected() and not WIFI_ESTABLISHED:
-        do_connect(CONFIG, timeout_ms=1000)
-        # Wifi will auto-reconnect once established
-        WIFI_ESTABLISHED = sta_if.isconnected()
+    # Wifi will auto-reconnect
+    WIFI_ESTABLISHED = sta_if.isconnected()
     if WIFI_ESTABLISHED and CLIENT is None:
         # Do ntp sync if we are connected
         ntptime.settime()
@@ -143,12 +141,19 @@ if IS_TX:
             # in ms
             slots = [(slot * 5 + NODE_ID * 100) for slot in slots]
 
+            # TODO fix to avoid negative sleeps
+
             # sleep for first slot
-            sleep_ms(slots[0] - ((time_ns() % 5e9) / 1e6))
+            sleep_for = slots[0] - ((time_ns() % 5e9) / 1e6)
+            if sleep_for > 0:
+                sleep_ms(sleep_for)
+
             rfm_trx.tx_msg(bytes.fromhex(CONFIG['client_id']))
 
             # sleep for second slot
-            sleep_ms(slots[1] - ((time_ns() % 5e9) / 1e6))
+            sleep_for = slots[1] - ((time_ns() % 5e9) / 1e6)
+            if sleep_for > 0:
+                sleep_ms(sleep_for)
             rfm_trx.tx_msg(bytes.fromhex(CONFIG['client_id']))
         else:
             sleep_ms(1500)
