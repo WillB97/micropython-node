@@ -1,6 +1,8 @@
 import json
 import network
 import ntptime
+import neopixel
+from machine import Pin
 from time import time_ns, sleep_ms
 from random import randint
 
@@ -13,6 +15,7 @@ LED = get_led()
 VERSION = get_version()
 BOOT_VER = get_version("boot_version.txt")
 CS_PIN = 7
+LED_CYCLE = [(50, 0, 0), (0, 50, 0), (0, 0, 50)]
 
 def board_status():
     import esp32
@@ -66,16 +69,34 @@ def sub_cb(topic, payload):
         print("Fatal error in callback:")
         sys.print_exception(e)
 
-# TODO detect if we are transmitter or receiver
-IS_TX = True
+# Detect if we are transmitter or receiver
+CFG1_STRAP = Pin(0, Pin.IN, Pin.PULL_DOWN)
+IS_TX = not CFG1_STRAP.value()
 
 # TODO get node ID
 NODE_ID = 0
+
+LEDS = neopixel.NeoPixel(Pin(10), 5, timing=(300,900,600,600))
+LEDS.fill((0, 0, 0))
+LEDS.write()
+
+for x in range(8):
+    for idx in range(5):
+        LEDS[idx] = (5 if idx == x else 0, 5 if idx+1 == x else 0, 5 if idx+2 == x else 0)
+    LEDS.write()
+    sleep_ms(200)
+
+# LED 5 - green=TX, blue=RX
+LEDS[4] = (0, 50 if IS_TX else 0, 50 if not IS_TX else 0)
+LEDS.write()
 
 CLIENT = None
 MQTT_STARTED = False
 sta_if = network.WLAN(network.WLAN.IF_STA)
 WIFI_ESTABLISHED = sta_if.isconnected()
+
+rfm_trx.spi_init(CS_PIN)
+WITH_TRX = rfm_trx.detect_trx()
 
 def ensure_wifi():
     global WIFI_ESTABLISHED, CLIENT
@@ -88,18 +109,23 @@ def ensure_wifi():
         ntptime.settime()
         CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
 
+    # LED 4 - blue=no rfm, red=no WiFi
+    LEDS[3] = (50 if not not sta_if.isconnected() else 0, 0, 50 if not WITH_TRX else 0)
+    LEDS.write()
+
 # Do not run MQTT operations if not connected, they will hang until reconnected
 # WiFi automatically reconnects, MQTT will reconnect on next action
 ensure_wifi()
 
-rfm_trx.spi_init(CS_PIN)
-WITH_TRX = rfm_trx.detect_trx()
-
+LED_ENTRY = 0
 if IS_TX:
     # For transmitter
     rfm_trx.tx_init()
 
     while True:
+        LEDS[0] = LED_CYCLE[LED_ENTRY]
+        LEDS.write()
+        LED_ENTRY = (LED_ENTRY + 1) % 3
         # Every 5s, each node gets a 100ms timeslot, ordered by node id
         ensure_wifi()
         if sta_if.isconnected() and CLIENT is not None:
@@ -132,11 +158,21 @@ if IS_TX:
                 CLIENT.check_msg()
 
 else:
+    RECV_COUNT = 0
     # For receiver
     rfm_trx.rx_init()
     while True:
+        LEDS[0] = LED_CYCLE[LED_ENTRY]
+        LEDS.write()
+        LED_ENTRY = (LED_ENTRY + 1) % 3
+
         if WITH_TRX:
-            rfm_trx.rx_msg()
+            recvd_msg = rfm_trx.rx_msg()
+            if recvd_msg:
+                LEDS[1] = LED_CYCLE[RECV_COUNT % 3]
+                LEDS.write()
+                RECV_COUNT += 1
+
         ensure_wifi()
 
         if sta_if.isconnected() and CLIENT is not None:
