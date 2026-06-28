@@ -8,7 +8,8 @@ from random import randint
 
 import rfm_trx
 from mqtt import do_mqtt
-from boot_utils import do_connect, get_creds, get_led, get_version
+from boot_utils import get_creds, get_led, get_version
+from utils import lookup_node_id
 CONFIG = get_creds()
 CLIENT = None
 LED = get_led()
@@ -73,8 +74,7 @@ def sub_cb(topic, payload):
 CFG1_STRAP = Pin(0, Pin.IN, Pin.PULL_DOWN)
 IS_TX = not CFG1_STRAP.value()
 
-# TODO get node ID
-NODE_ID = 1
+NODE_ID = lookup_node_id()
 
 LEDS = neopixel.NeoPixel(Pin(10), 5, timing=(300,900,600,600))
 LEDS.fill((0, 0, 0))

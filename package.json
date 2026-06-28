@@ -4,7 +4,8 @@
     ["future/main.py", "src/main.py"],
     ["future/mqtt.py", "src/mqtt.py"],
     ["future/rfm_trx.py", "src/rfm_trx.py"],
-    ["future/utils.py", "src/utils.py"]
+    ["future/utils.py", "src/utils.py"],
+    ["future/ids.json", "src/ids.json"]
   ],
   "deps": [
     ["umqtt.simple", "1.7.0"]
