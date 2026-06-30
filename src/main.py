@@ -17,6 +17,7 @@ VERSION = get_version()
 BOOT_VER = get_version("boot_version.txt")
 CS_PIN = 7
 LED_CYCLE = [(20, 0, 0), (0, 20, 0), (0, 0, 20)]
+NODE_ID = lookup_node_id(CONFIG['client_id'])
 
 def board_status():
     import esp32
@@ -25,7 +26,7 @@ def board_status():
     return {
         'identifier': CLIENT.client_id, 'temp': esp32.mcu_temperature(),
         'ssid': sta_if.config('ssid'), 'wifi_rssi': sta_if.status('rssi'),
-        'version': VERSION, 'boot_version': BOOT_VER, 'source': 'mqtt'
+        'version': VERSION, 'boot_version': BOOT_VER, 'source': 'mqtt', 'node_id': NODE_ID
     }
 
 def sub_cb(topic, payload):
@@ -74,7 +75,7 @@ def sub_cb(topic, payload):
 CFG1_STRAP = Pin(0, Pin.IN, Pin.PULL_DOWN)
 IS_TX = not CFG1_STRAP.value()
 
-NODE_ID = lookup_node_id()
+print("Node ID", NODE_ID)
 
 LEDS = neopixel.NeoPixel(Pin(10), 5, timing=(300,900,600,600))
 LEDS.fill((0, 0, 0))

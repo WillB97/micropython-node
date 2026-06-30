@@ -14,6 +14,7 @@ Packet structure:
 import time
 import machine
 from machine import Pin
+from utils import lookup_node_id
 
 SPI: machine.SPI = None
 CS: Pin = None
@@ -149,7 +150,7 @@ def rx_msg(timeout_s=5):
         # try reading out FIFO
         payload = spi_read(bytearray([0x7F]), recv_len).hex()
 
-        print(payload, rssi, sep=':')
+        print(payload, lookup_node_id(payload), rssi, sep=':')
         # print("Msg received (", recv_len, "b, RSSI", rssi, "):", payload)
         return True
     return False

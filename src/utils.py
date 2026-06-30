@@ -1,3 +1,14 @@
+def _load_lookup_table():
+    import json
+
+    try:
+        with open('/active/ids.json') as f:
+            return json.load(f)
+    except ValueError:
+        return {}
+
+NODE_LOOKUP = _load_lookup_table()
+
 def exists(file):
     try:
         with open(file):
@@ -5,15 +16,5 @@ def exists(file):
     except OSError:
         return False
 
-def lookup_node_id():
-    import machine
-    import json
-    client_id = machine.unique_id().hex()
-
-    try:
-        with open('/active/ids.json') as f:
-            id_map =json.load(f)
-    except ValueError:
-        id_map = {}
-
-    return id_map.get(client_id, {"id": 0})["id"]
+def lookup_node_id(id):
+    return NODE_LOOKUP.get(id, {"id": 0})["id"]
