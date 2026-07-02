@@ -31,9 +31,13 @@ jobs:
           python-version: 3.14
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Load website
+        run: |
+          mkdir dist/
+          cp -r html/* dist/
       - name: Generate hashes
         run: |
-          mkdir dist/ dist/bootloader
+          mkdir dist/bootloader
           scripts/generate_hashes.py package.json --strip-prefix future --new-prefix active --output dist/hashes.json
           scripts/generate_hashes.py bootloader/package.json --output dist/bootloader/hashes.json
       - name: Upload artifact

@@ -18,40 +18,59 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.14.1/mqtt.min.js"
     integrity="sha512-og7eV3frrnek0Yx80Y4mVyfi3uMc2CHgRl5wBIEsabDd+G8KGwWtx+XpxDimWNr3+NirTBhNyxTTqImafjKemQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 
 <body class="text-center">
-  <!-- TODO navbar -->
-  <nav class="navbar fixed-top bg-dark border-bottom border-body" data-bs-theme="dark">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">Navbar w/ text</a>
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Features</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Pricing</a>
-        </li>
-      </ul>
-      <span class="navbar-text">
-        Navbar text with an inline element
-      </span>
-    </div>
-  </nav>
-
   <div class="container my-5">
-    <h1>Hello, world!</h1>
+    <h1>Electromagnetic Powergrid Monitoring</h1>
+    <table class="table table-hover" id="deviceState">
+      <thead>
+        <th>Node</th>
+        <th>Serial</th>
+        <th>RFM Last Seen</th>
+        <th>WiFi Last Seen</th>
+        <th>Offline?</th>
+        <th>Extra Data</th>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 
 </body>
-<!-- Login modal -->
+<!-- TODO colouring -->
 <script lang="js">
-  // If cookie present, attempt to connect
-  // If connection denied, clear cookie
-  // else mqtt.connect
+  var STATE = {};
+  const client = mqtt.connect("wss://mqtt-direct.wbb.pw:8884", { username: "guest", password: "guest" })
+  client.on("connect", () => {
+    client.subscribe("state", (err) => {
+      if (err) {
+        console.log("Failed to subscribe");
+      }
+    });
+  });
+  client.on("message", (topic, message) => {
+    console.log(`Message received: (${topic}) ${message.toString()}`);
+    STATE = JSON.parse(message.toString());
+    $('#deviceState tbody').empty();
+    for (const [key, value] of Object.entries(STATE['devices'])) {
+      let rfm_last_seen = (value['rfm'] > 0) ? Math.floor(STATE['current_time'] - value['rfm']) : '-';
+      let wifi_last_seen = (value['wifi'] > 0) ? Math.floor(STATE['current_time'] - value['wifi']) : '-';
+      $('#deviceState tbody:last-child').append(
+        `<tr>
+          <td>${value['node_id']}</td>
+          <td>${key}</td>
+          <td>${rfm_last_seen} secs</td>
+          <td>${wifi_last_seen} secs</td>
+          <td>${value['offline_confidence']}%</td>
+          <td>
+          <details><pre style="text-align:left"><code>${JSON.stringify(value['extra_data'],null,2)}</code></pre></details>
+          </td>
+        </tr>`);
+    }
+  });
 </script>
 
 </html>
