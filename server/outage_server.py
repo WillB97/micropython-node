@@ -2,6 +2,7 @@
 # ```json
 # {
 #     "<serial>": {
+#         "node_id": "<node id>"
 #         "rfm": "<timestamp>",
 #         "wifi": "<timestamp>",
 #         "extra_data": "<mqtt payload + rfm rssi>",
@@ -40,6 +41,7 @@ class DeviceData:
 STATE_LOCK = Lock()
 DEVICE_STATES = defaultdict(lambda: DeviceData())
 
+# TODO add handlers for "state/forget" and "state/reset" topics
 
 def on_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage):
     LOGGER.debug(f"Message received ({message.topic}) {message.payload}")

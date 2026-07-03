@@ -8,7 +8,7 @@
   <!-- TODO make icon -->
   <link rel="icon" href="favicon.ico">
 
-  <title>Node Management</title>
+  <title>Powergrid Monitoring</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -26,7 +26,7 @@
 <body class="text-center">
   <div class="container my-5">
     <h1>Electromagnetic Powergrid Monitoring</h1>
-    <table class="table table-hover" id="deviceState">
+    <table class="table table-hover align-middle" id="deviceState">
       <thead>
         <th>Node</th>
         <th>Serial</th>
@@ -40,7 +40,6 @@
   </div>
 
 </body>
-<!-- TODO colouring -->
 <script lang="js">
   var STATE = {};
   const client = mqtt.connect("wss://mqtt-direct.wbb.pw:8884", { username: "guest", password: "guest" })
@@ -54,20 +53,28 @@
   client.on("message", (topic, message) => {
     console.log(`Message received: (${topic}) ${message.toString()}`);
     STATE = JSON.parse(message.toString());
+    // TODO if row exists for device, just update instead of recreating
+    // TODO sort by node id (insertion sort?)
     $('#deviceState tbody').empty();
     for (const [key, value] of Object.entries(STATE['devices'])) {
       let rfm_last_seen = (value['rfm'] > 0) ? Math.floor(STATE['current_time'] - value['rfm']) : '-';
       let wifi_last_seen = (value['wifi'] > 0) ? Math.floor(STATE['current_time'] - value['wifi']) : '-';
+      let colouring = "";
+      if (value['offline_confidence'] > 80) {
+        colouring = "table-danger";
+      } else if (value['offline_confidence'] > 30) {
+        colouring = "table-warning";
+      }
       $('#deviceState tbody:last-child').append(
-        `<tr>
+        `<tr class="${colouring}" id="${key}-row">
           <td>${value['node_id']}</td>
           <td>${key}</td>
           <td>${rfm_last_seen} secs</td>
           <td>${wifi_last_seen} secs</td>
           <td>${value['offline_confidence']}%</td>
-          <td>
-          <details><pre style="text-align:left"><code>${JSON.stringify(value['extra_data'],null,2)}</code></pre></details>
-          </td>
+          <td><details><pre style="text-align:left"><code>
+            ${JSON.stringify(value['extra_data'], null, 2)}
+          </code></pre></details></td>
         </tr>`);
     }
   });
