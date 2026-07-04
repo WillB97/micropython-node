@@ -130,7 +130,7 @@ def rx_msg(timeout_s=5):
     while (int.from_bytes(spi_read(bytearray([0x02]), 1)) & 0x20):
         time.sleep(0.001)
         if time.time() > end_time:
-            return False
+            return None
 
     # Measure RSSI, hopefully in a packet
     rssi = int.from_bytes(spi_read(bytearray([0x26]), 1))
@@ -144,13 +144,12 @@ def rx_msg(timeout_s=5):
 
     # Check valid header
     if header != 0b10100101:
-        return False
+        return None
 
     if recv_len > 0:
         # try reading out FIFO
         payload = spi_read(bytearray([0x7F]), recv_len).hex()
 
-        print(payload, lookup_node_id(payload), rssi, sep=':')
         # print("Msg received (", recv_len, "b, RSSI", rssi, "):", payload)
-        return True
-    return False
+        return (payload, lookup_node_id(payload), rssi)
+    return None

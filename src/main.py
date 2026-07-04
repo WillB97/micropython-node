@@ -105,7 +105,12 @@ def ensure_wifi():
     WIFI_ESTABLISHED = sta_if.isconnected()
     if WIFI_ESTABLISHED and CLIENT is None:
         # Do ntp sync if we are connected
-        ntptime.settime()
+        for _ in range(10):
+            try:
+                ntptime.settime()
+                break
+            except OSError:
+                print("NTP sync failed")
         CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
 
     # LED 4 - blue=no rfm, red=no WiFi
@@ -172,6 +177,7 @@ else:
     RECV_COUNT = 0
     # For receiver
     rfm_trx.rx_init()
+    slot_idx = time_ns() // 5_000_000_000
     while True:
         LEDS[0] = LED_CYCLE[LED_ENTRY]
         LEDS.write()
@@ -180,6 +186,18 @@ else:
         if WITH_TRX:
             recvd_msg = rfm_trx.rx_msg()
             if recvd_msg:
+                print(*recvd_msg, sep=':')
+                if sta_if.isconnected() and CLIENT is not None:
+                    node_serial, node_id, rssi = recvd_msg
+                    CLIENT.publish(f'status/{node_serial}',json.dumps(
+                        {
+                            "identifier": node_serial,
+                            "rssi": rssi,
+                            "source": "rfm",
+                            "node_id": node_id,
+                        }
+                    ))
+
                 LEDS[1] = LED_CYCLE[RECV_COUNT % 3]
                 LEDS.write()
                 RECV_COUNT += 1
@@ -188,3 +206,7 @@ else:
 
         if sta_if.isconnected() and CLIENT is not None:
             CLIENT.check_msg()
+
+        if (time_ns() // 5_000_000_000) > slot_idx:
+            print(CONFIG['client_id'], NODE_ID, 255, sep=':')
+            slot_idx = time_ns() // 5_000_000_000
