@@ -3,7 +3,7 @@ import network
 import ntptime
 import neopixel
 from machine import Pin
-from time import time_ns, sleep_ms
+from time import time_ns, sleep_ms, localtime
 from random import randint
 
 import rfm_trx
@@ -21,6 +21,9 @@ NODE_ID = lookup_node_id(CONFIG['client_id'])
 LEDS = neopixel.NeoPixel(Pin(10), 5, timing=(300,900,600,600))
 LEDS.fill((0, 0, 0))
 LEDS.write()
+
+# TODO NTP server
+ntptime.host = "time.cloudflare.com"
 
 def board_status():
     import esp32
@@ -106,15 +109,16 @@ def ensure_wifi():
     global WIFI_ESTABLISHED, CLIENT
     # Wifi will auto-reconnect
     WIFI_ESTABLISHED = sta_if.isconnected()
-    if WIFI_ESTABLISHED and CLIENT is None:
-        # Do ntp sync if we are connected
-        for _ in range(10):
+    if WIFI_ESTABLISHED:
+        if CLIENT is None:
+            CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
+
+        if localtime()[0] < 2026:
+            # Do ntp sync if we are connected
             try:
                 ntptime.settime()
-                break
             except OSError:
                 print("NTP sync failed")
-        CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
 
     # LED 4 - blue=no rfm, red=no WiFi
     LEDS[3] = (20 if not sta_if.isconnected() else 0, 0, 20 if not WITH_TRX else 0)
