@@ -26,6 +26,7 @@
 <body class="text-center">
   <div class="container my-5">
     <h1>Electromagnetic Powergrid Monitoring</h1>
+    <p>Last report: <b id="last-report-time"></b></p>
     <table class="table table-hover align-middle" id="deviceState">
       <thead>
         <th>Node</th>
@@ -35,12 +36,23 @@
         <th>Offline?</th>
         <th>Extra Data</th>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        <tr style="visibility: hidden;" id="-row" node-id="0"></tr>
+      </tbody>
     </table>
   </div>
 
 </body>
 <script lang="js">
+  function bisectLeft(arr, value) {
+    for (let index = 0; index < arr.length; index++) {
+      const element = arr[index];
+      if (value < element) {
+        return arr[index - 1];
+      }
+    }
+    return arr[arr.length - 1];
+  }
   var STATE = {};
   const client = mqtt.connect("wss://mqtt-direct.wbb.pw:8884", { username: "guest", password: "guest" })
   client.on("connect", () => {
@@ -53,29 +65,42 @@
   client.on("message", (topic, message) => {
     console.log(`Message received: (${topic}) ${message.toString()}`);
     STATE = JSON.parse(message.toString());
-    // TODO if row exists for device, just update instead of recreating
-    // TODO sort by node id (insertion sort?)
-    $('#deviceState tbody').empty();
+    $("#last-report-time").text(new Date(STATE['current_time'] * 1000).toLocaleString());
+    let seen_ids = [];
+    $("#deviceState tbody tr").each(function () { seen_ids.push(parseInt($(this).attr('node-id'), 10)); });
+    seen_ids = seen_ids.sort();
     for (const [key, value] of Object.entries(STATE['devices'])) {
       let rfm_last_seen = (value['rfm'] > 0) ? Math.floor(STATE['current_time'] - value['rfm']) : '-';
       let wifi_last_seen = (value['wifi'] > 0) ? Math.floor(STATE['current_time'] - value['wifi']) : '-';
       let colouring = "";
-      if (value['offline_confidence'] > 80) {
+      if (value['offline_confidence'] > 60) {
         colouring = "table-danger";
-      } else if (value['offline_confidence'] > 30) {
+      } else if (value['offline_confidence'] > 0) {
         colouring = "table-warning";
       }
-      $('#deviceState tbody:last-child').append(
-        `<tr class="${colouring}" id="${key}-row">
-          <td>${value['node_id']}</td>
-          <td>${key}</td>
-          <td>${rfm_last_seen} secs</td>
-          <td>${wifi_last_seen} secs</td>
-          <td>${value['offline_confidence']}%</td>
-          <td><details><pre style="text-align:left"><code>
-            ${JSON.stringify(value['extra_data'], null, 2)}
-          </code></pre></details></td>
-        </tr>`);
+      if ($(`#${key}-row`).length == 0) {
+        const node_id = value['node_id'];
+        const last_id = bisectLeft(seen_ids, node_id);
+        seen_ids.push(node_id);
+        seen_ids = seen_ids.sort();
+
+        $(`#deviceState tbody tr[node-id=${last_id}]`).after(
+          `<tr class="${colouring}" id="${key}-row" node-id="${node_id}">
+            <td id="${key}-node-id">${node_id}</td>
+            <td id="${key}-serial">${key}</td>
+            <td id="${key}-rfm-last"></td>
+            <td id="${key}-wifi-last"></td>
+            <td id="${key}-offline"></td>
+            <td><details><pre style="text-align:left"><code id="${key}-extra">
+            </code></pre></details></td>
+          </tr>`);
+      }
+
+      $(`#${key}-rfm-last`).text(`${rfm_last_seen} secs`);
+      $(`#${key}-wifi-last`).text(`${wifi_last_seen} secs`);
+      $(`#${key}-offline`).text(`${value['offline_confidence']}%`);
+      $(`#${key}-extra`).text(JSON.stringify(value['extra_data'], null, 2));
+      $(`#${key}-row`).removeClass("table-danger").removeClass("table-warning").addClass(colouring);
     }
   });
 </script>
