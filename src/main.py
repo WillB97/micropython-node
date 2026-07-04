@@ -18,6 +18,9 @@ BOOT_VER = get_version("boot_version.txt")
 CS_PIN = 7
 LED_CYCLE = [(20, 0, 0), (0, 20, 0), (0, 0, 20)]
 NODE_ID = lookup_node_id(CONFIG['client_id'])
+LEDS = neopixel.NeoPixel(Pin(10), 5, timing=(300,900,600,600))
+LEDS.fill((0, 0, 0))
+LEDS.write()
 
 def board_status():
     import esp32
@@ -43,8 +46,12 @@ def sub_cb(topic, payload):
                 if data['identify']:
                     print("Identify on")
                     LED.flash(1000)
+                    LEDS[2] = (0, 0, 20)
+                    LEDS.write()
                 else:
                     print("Identify off")
+                    LEDS.write()
+                    LEDS[2] = (0, 0, 0)
                     LED.on()
             if data.get('script'):
                 # script: str - exec as python
@@ -76,10 +83,6 @@ CFG1_STRAP = Pin(0, Pin.IN, Pin.PULL_DOWN)
 IS_TX = not CFG1_STRAP.value()
 
 print("Node ID", NODE_ID)
-
-LEDS = neopixel.NeoPixel(Pin(10), 5, timing=(300,900,600,600))
-LEDS.fill((0, 0, 0))
-LEDS.write()
 
 for x in range(8):
     for idx in range(5):
