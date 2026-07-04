@@ -68,7 +68,7 @@
     $("#last-report-time").text(new Date(STATE['current_time'] * 1000).toLocaleString());
     let seen_ids = [];
     $("#deviceState tbody tr").each(function () { seen_ids.push(parseInt($(this).attr('node-id'), 10)); });
-    seen_ids = seen_ids.sort();
+    seen_ids.sort((a, b) => a - b);
     for (const [key, value] of Object.entries(STATE['devices'])) {
       let rfm_last_seen = (value['rfm'] > 0) ? Math.floor(STATE['current_time'] - value['rfm']) : '-';
       let wifi_last_seen = (value['wifi'] > 0) ? Math.floor(STATE['current_time'] - value['wifi']) : '-';
@@ -82,7 +82,7 @@
         const node_id = value['node_id'];
         const last_id = bisectLeft(seen_ids, node_id);
         seen_ids.push(node_id);
-        seen_ids = seen_ids.sort();
+        seen_ids.sort((a, b) => a - b);
 
         $(`#deviceState tbody tr[node-id=${last_id}]`).after(
           `<tr class="${colouring}" id="${key}-row" node-id="${node_id}">
