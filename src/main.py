@@ -192,14 +192,15 @@ else:
                 print(*recvd_msg, sep=':')
                 if sta_if.isconnected() and CLIENT is not None:
                     node_serial, node_id, rssi = recvd_msg
-                    CLIENT.publish(f'status/{node_serial}',json.dumps(
-                        {
-                            "identifier": node_serial,
-                            "rssi": rssi,
-                            "source": "rfm",
-                            "node_id": node_id,
-                        }
-                    ))
+                    if len(node_serial) == 12:
+                        CLIENT.publish(f'status/{node_serial}',json.dumps(
+                            {
+                                "identifier": node_serial,
+                                "rssi": rssi,
+                                "source": "rfm",
+                                "node_id": node_id,
+                            }
+                        ))
 
                 LEDS[1] = LED_CYCLE[RECV_COUNT % 3]
                 LEDS.write()
