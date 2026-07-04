@@ -41,7 +41,37 @@ class DeviceData:
 STATE_LOCK = Lock()
 DEVICE_STATES = defaultdict(lambda: DeviceData())
 
-# TODO add handlers for "state/forget" and "state/reset" topics
+
+def on_forget_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage):
+    LOGGER.debug(f"Message received ({message.topic}) {message.payload}")
+    try:
+        payload = json.loads(message.payload)
+    except json.JSONDecodeError:
+        LOGGER.warning(f"Failed to decode message {message.payload}")
+        return
+
+    if 'device' not in payload:
+        LOGGER.warning(f"Message is missing required keys: {message.payload}")
+        return
+
+    with STATE_LOCK:
+        if DEVICE_STATES.pop(payload['device'], None):
+            LOGGER.info(f"Forgetting {payload['device']}")
+
+
+def on_reset_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage):
+    LOGGER.debug(f"Message received ({message.topic}) {message.payload}")
+    try:
+        payload = json.loads(message.payload)
+    except json.JSONDecodeError:
+        LOGGER.warning(f"Failed to decode message {message.payload}")
+        return
+
+    if payload.get('reset', False):
+        LOGGER.info("Resetting seen devices")
+        with STATE_LOCK:
+            DEVICE_STATES.clear()
+
 
 def on_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage):
     LOGGER.debug(f"Message received ({message.topic}) {message.payload}")
@@ -88,6 +118,8 @@ def main():
     )
     mqtt_client.connect(mqtt_config["host"], mqtt_config["port"])
     mqtt_client.subscribe("status/#", on_message)
+    mqtt_client.subscribe("reset", on_reset_message)
+    mqtt_client.subscribe("forget", on_forget_message)
 
     while True:
         current_time = time()
@@ -118,7 +150,7 @@ def main():
             json.dumps(payload),
             retain=True,
         )
-        sleep(5)
+        sleep(1)
 
 
 if __name__ == '__main__':

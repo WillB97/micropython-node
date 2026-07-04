@@ -1,0 +1,13 @@
+[Unit]
+Description=Powergrid Monitoring Service
+After=network.target mosquitto.service
+Wants=network.target
+
+[Service]
+WorkingDirectory=/opt/micropython-node
+ExecStart=/usr/bin/python3 server/outage_server.py creds.json
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
