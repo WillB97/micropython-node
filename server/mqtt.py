@@ -142,8 +142,8 @@ def load_mqtt_config(filename: Path) -> MQTTVariables:
     config = json.loads(filename.read_text())
     return MQTTVariables(
         host=config["mqtt_server"],
-        port=8883,
-        use_tls=True,
+        port=8883 if config["mqtt_server"] != 'localhost' else 1883,
+        use_tls=True  if config["mqtt_server"] != 'localhost' else False,
         username=config["mqtt_user"],
         password=config["mqtt_passwd"],
     )
