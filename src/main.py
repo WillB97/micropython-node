@@ -208,5 +208,17 @@ else:
             CLIENT.check_msg()
 
         if (time_ns() // 5_000_000_000) > slot_idx:
+            # TODO remove
+            if sta_if.isconnected() and CLIENT is not None:
+                CLIENT.publish(f'status/{CLIENT.client_id}',json.dumps(board_status()))
+                CLIENT.publish(f'status/{CLIENT.client_id}',json.dumps(
+                    {
+                        "identifier": CLIENT.client_id,
+                        "rssi": 255,
+                        "source": "rfm",
+                        "node_id": NODE_ID,
+                    }
+                ))
+
             print(CONFIG['client_id'], NODE_ID, 255, sep=':')
             slot_idx = time_ns() // 5_000_000_000
