@@ -142,14 +142,14 @@ def rx_msg(timeout_s=5):
     # Read header and packet length
     header, recv_len = spi_read(bytearray([0x7F]), 2)
 
-    # Check valid header
-    if header != 0b10100101:
-        return None
-
     if recv_len > 0:
         # try reading out FIFO
         payload = spi_read(bytearray([0x7F]), recv_len).hex()
+    else:
+        payload = ""
 
+    # Check valid header
+    if header == 0b10100101 and lookup_node_id(payload) != 0:
         # print("Msg received (", recv_len, "b, RSSI", rssi, "):", payload)
         return (payload, lookup_node_id(payload), rssi)
     return None
