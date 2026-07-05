@@ -73,6 +73,26 @@ def on_reset_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage
             DEVICE_STATES.clear()
 
 
+def on_state_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage):
+    LOGGER.debug(f"Message received ({message.topic}) {message.payload}")
+    try:
+        payload = json.loads(message.payload)
+    except json.JSONDecodeError:
+        LOGGER.warning(f"Failed to decode message {message.payload}")
+        return
+
+    if 'devices' not in payload:
+        LOGGER.warning(f"Message is missing required keys: {message.payload}")
+        return
+
+    with STATE_LOCK:
+            DEVICE_STATES.clear()
+            for device, data in payload['devices'].items():
+                DEVICE_STATES[device] = DeviceData(**data)
+
+    LOGGER.info("Loaded previous state")
+
+
 def on_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage):
     LOGGER.debug(f"Message received ({message.topic}) {message.payload}")
     timestamp = time()
@@ -120,6 +140,11 @@ def main():
     mqtt_client.subscribe("status/#", on_message)
     mqtt_client.subscribe("reset", on_reset_message)
     mqtt_client.subscribe("forget", on_forget_message)
+    mqtt_client.subscribe("state", on_state_message)
+
+    sleep(2)
+    mqtt_client.unsubscribe('state')
+    sleep(8)
 
     while True:
         current_time = time()
