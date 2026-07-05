@@ -35,7 +35,7 @@ class DeviceData:
     rfm: float = 0.0
     wifi: float = 0.0
     extra_data: dict[str, Any] = field(default_factory=dict)
-    offline_confidence: int = 0
+    offline_confidence: int = -1
 
 
 STATE_LOCK = Lock()
