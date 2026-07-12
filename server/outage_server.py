@@ -20,6 +20,7 @@ from threading import Lock
 from time import sleep, time
 from typing import Any
 
+import requests
 from paho.mqtt.client import MQTTMessage
 from paho.mqtt.client import Client as BaseMQTTClient
 
@@ -148,6 +149,14 @@ def main():
 
     while True:
         current_time = time()
+        # fetch node map
+        try:
+            r = requests.get('https://power.emf.camp/distro/monitor/json').json()['nodes']
+            node_lookup = {node['node_id']: node['distro_id'] for node in r}
+        except Exception:
+            LOGGER.warning("Failed to load lookup")
+            node_lookup = {}
+
         with STATE_LOCK:
             for device, data in DEVICE_STATES.items():
                 last_seen = max(data.rfm, data.wifi)
@@ -155,6 +164,8 @@ def main():
                 prev_confidence = data.offline_confidence
                 raw_confidence = int(max(0, seen_delta - OFFLINE_THRESHOLD))
                 data.offline_confidence = int(min(100, raw_confidence))
+
+                distro_id = node_lookup.get(data.node_id)
 
                 if 0 < raw_confidence < 150:
                     LOGGER.info(f"Device offline: {device} ({data.node_id}), certainty {data.offline_confidence}%")
