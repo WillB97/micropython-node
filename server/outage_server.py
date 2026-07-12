@@ -168,11 +168,32 @@ def main():
                 distro_id = node_lookup.get(data.node_id)
 
                 if 0 < raw_confidence < 150:
-                    LOGGER.info(f"Device offline: {device} ({data.node_id}), certainty {data.offline_confidence}%")
-                    # TODO post outage
+                    LOGGER.info(
+                        f"Device offline: {device} ({data.node_id}), certainty {data.offline_confidence}%"
+                    )
+                    # Post outage
+                    if distro_id is not None:
+                        requests.post(
+                            "https://vm-power02.emf.camp/nodeState",
+                            json={
+                                "nodeID": distro_id,
+                                "state": "dead",
+                                "source": "monitor",
+                                "confidence": data.offline_confidence / 100,
+                            },
+                        )
                 elif prev_confidence and not raw_confidence:
                     LOGGER.info(f"Device reconnected: {device} ({data.node_id})")
-                    # TODO post restored
+                    # Post restored
+                    if distro_id is not None:
+                        requests.post(
+                            "https://vm-power02.emf.camp/nodeState",
+                            json={
+                                "nodeID": distro_id,
+                                "state": "alive",
+                                "source": "monitor",
+                            },
+                        )
 
             payload = {
                 "current_time": current_time,
