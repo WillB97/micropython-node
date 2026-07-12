@@ -51,12 +51,12 @@ def on_forget_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessag
         LOGGER.warning(f"Failed to decode message {message.payload}")
         return
 
-    if 'device' not in payload:
+    if "device" not in payload:
         LOGGER.warning(f"Message is missing required keys: {message.payload}")
         return
 
     with STATE_LOCK:
-        if DEVICE_STATES.pop(payload['device'], None):
+        if DEVICE_STATES.pop(payload["device"], None):
             LOGGER.info(f"Forgetting {payload['device']}")
 
 
@@ -68,7 +68,7 @@ def on_reset_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage
         LOGGER.warning(f"Failed to decode message {message.payload}")
         return
 
-    if payload.get('reset', False):
+    if payload.get("reset", False):
         LOGGER.info("Resetting seen devices")
         with STATE_LOCK:
             DEVICE_STATES.clear()
@@ -82,14 +82,14 @@ def on_state_message(client: BaseMQTTClient, userdata: Any, message: MQTTMessage
         LOGGER.warning(f"Failed to decode message {message.payload}")
         return
 
-    if 'devices' not in payload:
+    if "devices" not in payload:
         LOGGER.warning(f"Message is missing required keys: {message.payload}")
         return
 
     with STATE_LOCK:
-            DEVICE_STATES.clear()
-            for device, data in payload['devices'].items():
-                DEVICE_STATES[device] = DeviceData(**data)
+        DEVICE_STATES.clear()
+        for device, data in payload["devices"].items():
+            DEVICE_STATES[device] = DeviceData(**data)
 
     LOGGER.info("Loaded previous state")
 
@@ -144,15 +144,17 @@ def main():
     mqtt_client.subscribe("state", on_state_message)
 
     sleep(2)
-    mqtt_client.unsubscribe('state')
+    mqtt_client.unsubscribe("state")
     sleep(8)
 
     while True:
         current_time = time()
         # fetch node map
         try:
-            r = requests.get('https://power.emf.camp/distro/monitor/json').json()['nodes']
-            node_lookup = {node['node_id']: node['distro_id'] for node in r}
+            r = requests.get("https://power.emf.camp/distro/monitor/json").json()[
+                "nodes"
+            ]
+            node_lookup = {node["node_id"]: node["distro_id"] for node in r}
         except Exception:
             LOGGER.warning("Failed to load lookup")
             node_lookup = {}
@@ -210,5 +212,5 @@ def main():
         sleep(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
