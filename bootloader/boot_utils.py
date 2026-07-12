@@ -72,7 +72,7 @@ def get_creds(cred_file = "/creds.json", exclude_id=False):
         return creds
 
 def do_connect(config, timeout_ms=20000):
-    if not (config.get('ssid') and config.get('psk')):
+    if not (config.get('ssid') and config.get('psk', -1)) != -1:
         print("Credentials not configured")
         return False
 
