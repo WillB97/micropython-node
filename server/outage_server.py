@@ -151,10 +151,10 @@ def main():
         current_time = time()
         # fetch node map
         try:
-            r = requests.get("https://power.emf.camp/distro/monitor/json").json()[
-                "nodes"
+            r = requests.get("https://power.emf.camp/distro/status/json").json()[
+                "distros"
             ]
-            node_lookup = {node["node_id"]: node["distro_id"] for node in r}
+            node_lookup = {node["monitoring_node_id"]: node["distro_id"] for node in r}
         except Exception:
             LOGGER.warning("Failed to load lookup")
             node_lookup = {}
