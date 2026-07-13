@@ -154,7 +154,11 @@ def main():
             r = requests.get("https://power.emf.camp/distro/status/json").json()[
                 "distros"
             ]
-            node_lookup = {node["monitoring_node_id"]: node["distro_id"] for node in r}
+            node_lookup = {
+                node["monitoring_node_id"]: node["distro_id"]
+                for node in r
+                if node["monitoring_node_id"] is not None
+            }
         except Exception:
             LOGGER.warning("Failed to load lookup")
             node_lookup = {}
