@@ -111,7 +111,10 @@ def ensure_wifi():
     WIFI_ESTABLISHED = sta_if.isconnected()
     if WIFI_ESTABLISHED:
         if CLIENT is None:
-            CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
+            try:
+                CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
+            except OSError:
+                print("failed to initialise MQTT")
 
         if localtime()[0] < 2026:
             # Do ntp sync if we are connected
