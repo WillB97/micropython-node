@@ -129,14 +129,17 @@ def fetch_ota_update():
     package_hashes = "https://willb97.github.io/micropython-node/hashes.json"
     package = "github:willb97/micropython-node/package.json"
 
-    # Check if package files match published hashes
-    version, do_update = check_package_hashes(package_hashes)
-    if not do_update:
-        return
+    try:
+        # Check if package files match published hashes
+        version, do_update = check_package_hashes(package_hashes)
+        if not do_update:
+            return
 
-    rmtree('/lib/future')
-    # Abuse _install_package so that we get a return code
-    success = mip._install_package(package, "https://micropython.org/pi/v2", target='/lib', version=None, mpy=True)
+        rmtree('/lib/future')
+        # Abuse _install_package so that we get a return code
+        success = mip._install_package(package, "https://micropython.org/pi/v2", target='/lib', version=None, mpy=True)
+    except OSError:
+        success = False
     # on success, remove /active and mv /future to /active
     if success:
         rmtree('/active')
