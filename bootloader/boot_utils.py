@@ -184,6 +184,8 @@ def fetch_boot_ota_update():
             print("Updated bootloader")
         else:
             print("Bootloader update failed")
+    else:
+        print("Bootloader update failed")
 
     # Unconditionally remove /new_boot
     rmtree('/new_boot')
