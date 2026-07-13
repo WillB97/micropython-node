@@ -180,7 +180,7 @@ def main():
                     # Post outage
                     if distro_id is not None:
                         requests.post(
-                            "https://vm-power02.emf.camp/nodeState",
+                            "http://vm-power02.emf.camp/nodeState",
                             json={
                                 "nodeID": distro_id,
                                 "state": "dead",
@@ -193,7 +193,7 @@ def main():
                     # Post restored
                     if distro_id is not None:
                         requests.post(
-                            "https://vm-power02.emf.camp/nodeState",
+                            "http://vm-power02.emf.camp/nodeState",
                             json={
                                 "nodeID": distro_id,
                                 "state": "alive",
