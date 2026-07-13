@@ -158,19 +158,22 @@ def fetch_boot_ota_update():
     package_hashes = "https://willb97.github.io/micropython-node/bootloader/hashes.json"
     package = "github:willb97/micropython-node/bootloader/package.json"
 
-    # Check if package files match published hashes
-    version, do_update = check_package_hashes(package_hashes, "boot_version.txt", git_ver=False)
-    if not do_update:
-        return
+    try:
+        # Check if package files match published hashes
+        version, do_update = check_package_hashes(package_hashes, "boot_version.txt", git_ver=False)
+        if not do_update:
+            return
 
-    print("Updating bootloader to version", version)
+        print("Updating bootloader to version", version)
 
-    # Create & clear /new_boot
-    rmtree('/new_boot')
-    os.mkdir('/new_boot')
+        # Create & clear /new_boot
+        rmtree('/new_boot')
+        os.mkdir('/new_boot')
 
-    # Abuse _install_package so that we get a return code
-    success = mip._install_package(package, "https://micropython.org/pi/v2", target='/new_boot', version=None, mpy=True)
+        # Abuse _install_package so that we get a return code
+        success = mip._install_package(package, "https://micropython.org/pi/v2", target='/new_boot', version=None, mpy=True)
+    except OSError:
+        success = False
 
     if success:
         # Recheck hashes and ensure versions still match
