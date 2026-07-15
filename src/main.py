@@ -13,6 +13,7 @@ from utils import lookup_node_id
 
 wdt = WDT(timeout=10000)
 wdt.feed()
+tim = Timer(0)
 
 
 CONFIG = get_creds()
@@ -106,6 +107,9 @@ CLIENT = None
 MQTT_STARTED = False
 sta_if = network.WLAN(network.WLAN.IF_STA)
 WIFI_ESTABLISHED = sta_if.isconnected()
+
+# Reset after 1 hour
+tim.init(mode=Timer.ONE_SHOT, period=3_600_000, callback=lambda _:reset())
 
 rfm_trx.spi_init(CS_PIN)
 WITH_TRX = rfm_trx.detect_trx()
