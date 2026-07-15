@@ -2,7 +2,7 @@ import json
 import network
 import ntptime
 import neopixel
-from machine import Pin
+from machine import Pin, Timer, WDT, reset
 from time import time_ns, sleep_ms, localtime
 from random import randint
 
@@ -10,6 +10,11 @@ import rfm_trx
 from mqtt import do_mqtt
 from boot_utils import get_creds, get_led, get_version
 from utils import lookup_node_id
+
+wdt = WDT(timeout=10000)
+wdt.feed()
+
+
 CONFIG = get_creds()
 CLIENT = None
 LED = get_led()
@@ -107,6 +112,7 @@ WITH_TRX = rfm_trx.detect_trx()
 
 def ensure_wifi():
     global WIFI_ESTABLISHED, CLIENT
+    wdt.feed()
     # Wifi will auto-reconnect
     WIFI_ESTABLISHED = sta_if.isconnected()
     if WIFI_ESTABLISHED:
