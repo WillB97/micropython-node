@@ -11,10 +11,8 @@ from mqtt import do_mqtt
 from boot_utils import get_creds, get_led, get_version
 from utils import lookup_node_id
 
-wdt = WDT(timeout=10000)
+wdt = WDT(timeout=60000)
 wdt.feed()
-tim = Timer(0)
-
 
 CONFIG = get_creds()
 CLIENT = None
@@ -108,9 +106,6 @@ MQTT_STARTED = False
 sta_if = network.WLAN(network.WLAN.IF_STA)
 WIFI_ESTABLISHED = sta_if.isconnected()
 
-# Reset after 1 hour
-tim.init(mode=Timer.ONE_SHOT, period=3_600_000, callback=lambda _:reset())
-
 rfm_trx.spi_init(CS_PIN)
 WITH_TRX = rfm_trx.detect_trx()
 
@@ -122,7 +117,8 @@ def ensure_wifi():
     if WIFI_ESTABLISHED:
         if CLIENT is None:
             try:
-                CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
+                CLIENT = do_mqtt(CONFIG, [], lambda _: _)
+                # CLIENT = do_mqtt(CONFIG, [f'ctrl/{CONFIG['client_id']}'], sub_cb)
             except OSError:
                 print("failed to initialise MQTT")
 
@@ -157,9 +153,11 @@ if IS_TX:
         LEDS.write()
         LED_ENTRY = (LED_ENTRY + 1) % 3
         # Every 5s, each node gets a 100ms timeslot, ordered by node id
-        ensure_wifi()
+        wdt.feed() # ensure_wifi()
         if sta_if.isconnected() and CLIENT is not None:
             CLIENT.publish(f'status/{CLIENT.client_id}',json.dumps(board_status()))
+            CLIENT.disconnect()
+            CLIENT = None
 
         # split timeslot into 20x5ms slot. Align window so that modulo has 2.5s before window and 2.4s after
         # pick 2 random 5ms slots in the timeslot and send message twice
