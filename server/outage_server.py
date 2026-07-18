@@ -37,6 +37,7 @@ class DeviceData:
     wifi: float = 0.0
     extra_data: dict[str, Any] = field(default_factory=dict)
     offline_confidence: int = -1
+    display_name: str = ""
 
 
 STATE_LOCK = Lock()
@@ -158,7 +159,7 @@ def main():
                 "distros"
             ]
             node_lookup = {
-                node["monitoring_node_id"]: node["distro_id"]
+                node["monitoring_node_id"]: (node["distro_id"], node["name"])
                 for node in r
                 if node["monitoring_node_id"] is not None
             }
@@ -174,7 +175,9 @@ def main():
                 raw_confidence = int(max(0, seen_delta - OFFLINE_THRESHOLD))
                 data.offline_confidence = int(min(100, raw_confidence))
 
-                distro_id = node_lookup.get(data.node_id)
+                distro_id, node_name = node_lookup.get(data.node_id, (None, None))
+                if node_name:
+                    data.display_name = node_name
 
                 if 0 < raw_confidence < 150:
                     LOGGER.info(

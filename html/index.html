@@ -31,6 +31,7 @@
       <thead>
         <th>Node</th>
         <th>Serial</th>
+        <th>Name</th>
         <th>RFM Last Seen</th>
         <th>WiFi Last Seen</th>
         <th>Offline?</th>
@@ -81,6 +82,7 @@
       if ($(`#${key}-row`).length == 0) {
         const node_id = value['node_id'];
         const last_id = bisectLeft(seen_ids, node_id);
+        const display_name = value['display_name'];
         seen_ids.push(node_id);
         seen_ids.sort((a, b) => a - b);
 
@@ -88,6 +90,7 @@
           `<tr class="${colouring}" id="${key}-row" node-id="${node_id}">
             <td id="${key}-node-id">${node_id}</td>
             <td id="${key}-serial">${key}</td>
+            <td id="${key}-name">${display_name}</td>
             <td id="${key}-rfm-last"></td>
             <td id="${key}-wifi-last"></td>
             <td id="${key}-offline"></td>
@@ -98,6 +101,7 @@
 
       $(`#${key}-rfm-last`).text(`${rfm_last_seen} secs`);
       $(`#${key}-wifi-last`).text(`${wifi_last_seen} secs`);
+      $(`#${key}-name`).text(value['display_name']);
       $(`#${key}-offline`).text(`${value['offline_confidence']}%`);
       $(`#${key}-extra`).text(JSON.stringify(value['extra_data'], null, 2));
       $(`#${key}-row`).removeClass("table-danger").removeClass("table-warning").addClass(colouring);
