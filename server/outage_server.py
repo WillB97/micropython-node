@@ -147,7 +147,10 @@ def main():
     mqtt_client.unsubscribe("state")
     sleep(8)
 
+    loop_count = 0
+
     while True:
+        loop_count += 1
         current_time = time()
         # fetch node map
         try:
@@ -200,7 +203,7 @@ def main():
                                 "source": "monitor",
                             },
                         )
-                elif (int(last_seen) % 10) == 0:
+                elif (loop_count % 10) == 0:
                     if distro_id is not None:
                         requests.post(
                             "http://vm-power02.emf.camp/nodeState",
