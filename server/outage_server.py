@@ -200,6 +200,16 @@ def main():
                                 "source": "monitor",
                             },
                         )
+                elif (int(last_seen) % 10) == 0:
+                    if distro_id is not None:
+                        requests.post(
+                            "http://vm-power02.emf.camp/nodeState",
+                            json={
+                                "nodeID": distro_id,
+                                "state": "alive",
+                                "source": "monitor",
+                            },
+                        )
 
             payload = {
                 "current_time": current_time,
