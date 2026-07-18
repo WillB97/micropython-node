@@ -203,7 +203,7 @@ def main():
                                 "source": "monitor",
                             },
                         )
-                elif (loop_count % 10) == 0:
+                elif not raw_confidence and (loop_count % 10) == 0:
                     if distro_id is not None:
                         requests.post(
                             "http://vm-power02.emf.camp/nodeState",
